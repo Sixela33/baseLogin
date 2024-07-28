@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require("../models");
+const { User } = require('../models');
 
 const ACCESS_TOKEN_SECRET = "your_access_token_secret"; // Debe ser una clave secreta segura
 const REFRESH_TOKEN_SECRET = "your_refresh_token_secret"; // Debe ser una clave secreta segura
@@ -8,25 +8,23 @@ const REFRESH_TOKEN_EXPIRATION = '7d'; // Tiempo de expiración de los refresh t
 const ACCESS_TOKEN_EXPIRATION = '1h'; // Tiempo de expiración de los access tokens
 
 class UserService {
-    constructor() {
-
-    }
+    constructor() {}
 
     _generateAccessToken = (user) => {
-        return jwt.sign({ id: user._id, email: user.email }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRATION });
+        return jwt.sign({ id: user.id, email: user.email }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRATION });
     }
 
     _generateRefreshToken = (user) => {
-        const refreshToken = jwt.sign({ id: user._id, email: user.email }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
-        this.refreshTokens.push(refreshToken);
+        const refreshToken = jwt.sign({ id: user.id, email: user.email }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
+        user.refreshToken = refreshToken;
         return refreshToken;
     }
 
     createUser = async (name, email, role, password) => {
-        let old_user = await User.findOne({ email: email });
+        let old_user = await User.findOne({ where: { email: email } });
 
         if (old_user) {
-            throw {message: "This email is already registered", status: 400}
+            throw { message: "This email is already registered", status: 400 }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -38,51 +36,47 @@ class UserService {
         return { new_user, accessToken, refreshToken };
     }
 
-    logIn = async ( email, password ) => {
-        let user = await User.findOne({ email: email });
+    logIn = async (email, password) => {
+        let user = await User.findOne({ where: { email: email } });
 
         if (!user) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            throw { message: "Invalid email or password", status: 400 };
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            throw { message: "Invalid email or password", status: 400 };
         }
 
         const accessToken = this._generateAccessToken(user);
         const refreshToken = this._generateRefreshToken(user);
 
-        user.refreshToken = refreshToken
+        await user.save()
 
         return { accessToken, refreshToken };
-
     }
 
     refreshToken = async (token) => {
-
         if (!token) {
-            return res.status(401).json({ message: "Unauthorized" });
+            throw { message: "Unauthorized", status: 401 };
         }
 
-        let user = User.findOne({refreshToken: token})
+        const user = await User.findOne({ where: { refreshToken: token } });
 
         if (!user) {
-            throw {status:404, status: "Invalid refresh token"}
+            throw { message: "Invalid refresh token", status: 404 };
         }
 
-        let payload = null
+        let payload = null;
         try {
-            payload = await jwt.verify(token, REFRESH_TOKEN_SECRET);
+            payload = jwt.verify(token, REFRESH_TOKEN_SECRET);
         } catch (error) {
-            throw { message: error.message, status: 401 }   
+            throw { message: error.message, status: 401 };
         }
 
-        if (payload.userid != user.userid) throw {message: 'Invalid token', status: 403}
-    
         const accessToken = this._generateAccessToken(user);
 
-        return {accessToken}
+        return { accessToken };
     }
 }
 

@@ -1,9 +1,9 @@
 const express = require('express')
 const { sequelize } = require('./models')
-const { default: errorHandler } = require('./middlewares/ErrorHandler')
-const UserRouter = require('./routers/UserRouter')
+const errorHandler = require('./middlewares/ErrorHandler').default
+const UserRouter = require('./routers/UserRouter').default
 
-class Server{
+class Server {
     constructor() {
         this.host = 'localhost'
         this.port = 8080
@@ -22,7 +22,7 @@ class Server{
             res.send("<h1>placeholder</h1>")
         })
 
-        this.app.use(new UserRouter().start())
+        this.app.use('/api/users', new UserRouter().start())
 
         this.app.use(errorHandler)
 
