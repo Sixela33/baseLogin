@@ -35,7 +35,7 @@ class UserService {
         const accessToken = this._generateAccessToken(new_user);
         const refreshToken = this._generateRefreshToken(new_user);
 
-        return { new_user, accessToken, refreshToken }
+        return { new_user, accessToken, refreshToken };
     }
 
     logIn = async ( email, password ) => {
