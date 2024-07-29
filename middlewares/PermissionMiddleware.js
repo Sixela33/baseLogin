@@ -29,4 +29,4 @@ class PermissionsMiddelware {
     }
 }
 
-export default PermissionsMiddelware
+module.exports = PermissionsMiddelware
