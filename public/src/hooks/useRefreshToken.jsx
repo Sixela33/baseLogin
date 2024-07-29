@@ -10,25 +10,31 @@ const useRefreshToken = () => {
     const { setAuth } = useAuth();
 
     const refresh = async () => {
-        
-        const response = await axios.get('/api/users/refresh', {
+        try {
+            const response = await axios.get('/api/users/refresh', {
                 withCredentials: true
-        });
-
-        if(response.data && typeof response.data === 'string' && response.data.trim() !== '' && !response.data.includes('<')){
-
-           setAuth(prev => {
-              const decoded = jwtDecode(response.data)
-   
-               return {
-                   ...prev,
-                   decoded: decoded,
-                   accessToken: response.data
-               }
-           });
-       }
-        return response.data.accessToken;
+            });
+    
+            if (response.data && typeof response.data === 'string' && response.data.trim() !== '' && !response.data.includes('<')) {
+                setAuth(prev => {
+                    const decoded = jwtDecode(response.data);
+                    return {
+                        ...prev,
+                        decoded: decoded,
+                        accessToken: response.data
+                    };
+                });
+                return response.data.accessToken;
+            } else {
+                throw new Error('Invalid token response');
+            }
+        } catch (error) {
+            console.error('Failed to refresh token:', error);
+            setAuth({});
+            return null;
+        }
     }
+    
     return refresh;
 };
 
