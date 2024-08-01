@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
+import axios from '../api/axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     // Add login logic here
     console.log('Email:', email);
     console.log('Password:', password);
+    try {
+      await axios.post('/api/users/login', 
+        {
+          email,
+          password
+        }
+      )
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   return (

@@ -4,6 +4,7 @@ const UserRouter = require('./routers/UserRouter')
 const errorHandler = require('./middlewares/ErrorHandler')
 require('dotenv').config()
 const cors = require('cors')
+const requestLogger = require('./loggers/requestLogger')
 
 class Server {
     constructor() {
@@ -23,6 +24,8 @@ class Server {
             this.app.use(express.json())
             this.app.use(express.urlencoded({ extended: true }))
 
+            this.app.use(requestLogger)
+
             this.app.get('/', (req, res, next) => {
                 res.send('<h1>Placeholder</h1>')
             });
@@ -37,6 +40,7 @@ class Server {
             this.server.on('error', (error) =>
                 console.log(`Server Error: \n ${error.message}`)
             );
+            
         } catch (error) {
             console.error('Unable to connect to the database:', error);
         }
